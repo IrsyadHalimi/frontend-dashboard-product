@@ -18,6 +18,14 @@
         <h3>Total Nilai</h3>
         <p>${{ summary.totalValue.toLocaleString() }}</p>
       </div>
+      <div class="card">
+        <h3>Kategori Terbanyak</h3>
+        <p>{{ summary.topCategory }}</p>
+      </div>
+      <div class="card">
+        <h3>Data Terbaru</h3>
+        <p>{{ summary.latestItem }}</p>
+      </div>
     </div>
 
     <div class="charts-grid">
@@ -65,15 +73,37 @@ const fetchStats = async () => {
       params: { startDate: dateRange.value.start, endDate: dateRange.value.end },
     });
 
-    // Update Pie Data
-    pieOptions.value.series[0].data = data.categoryStats.map((c) => ({
-      name: c.category,
-      y: parseInt(c.total, 10),
-    }));
+    pieOptions.value = {
+      ...pieOptions.value,
+      series: [{
+        name: 'Jumlah',
+        data: data.categoryStats.map((c) => ({
+          name: c.category,
+          y: parseInt(c.total, 10),
+        })),
+      }],
+    };
 
-    // Update Column Data
-    columnOptions.value.xAxis.categories = data.timelineStats.map((t) => t.date);
-    columnOptions.value.series[0].data = data.timelineStats.map((t) => parseFloat(t.totalValue));
+    columnOptions.value = {
+      ...columnOptions.value,
+      // Tambahkan ini untuk mencegah error formatting otomatis yang aneh
+      lang: {
+        decimalPoint: '.',
+        thousandsSep: ','
+      },
+      xAxis: {
+        categories: data.timelineStats.map((t) => t.date || '-'),
+        crosshair: true
+      },
+      series: [{
+        name: 'Total Nilai',
+        data: data.timelineStats.map((t) => {
+          const val = parseFloat(t.totalValue);
+          return isNaN(val) ? 0 : val;
+        }),
+        color: '#42b983'
+      }],
+    };
 
     // Update Summary
     summary.value = data.summary;
