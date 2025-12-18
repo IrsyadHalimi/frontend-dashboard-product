@@ -135,7 +135,7 @@ const handleSync = async () => {
     await fetchData();
     alert('Sinkronisasi berhasil!');
   } catch (err) {
-    alert('Sync Gagal');
+    alert(err.response?.data?.message || 'Sync gagal');
   } finally {
     isSyncing.value = false;
   }
@@ -225,11 +225,25 @@ const filteredAndSortedItems = computed(() => {
   }
 
   result.sort((a, b) => {
-    let modifier = sortOrder.value === 'asc' ? 1 : -1;
-    if (a[sortKey.value] < b[sortKey.value]) return -1 * modifier;
-    if (a[sortKey.value] > b[sortKey.value]) return 1 * modifier;
-    return 0;
+    const modifier = sortOrder.value === 'asc' ? 1 : -1;
+
+    const valA = a[sortKey.value];
+    const valB = b[sortKey.value];
+
+    if (valA == null) return 1 * modifier;
+    if (valB == null) return -1 * modifier;
+
+    if (sortKey.value === 'updatedAt' || sortKey.value === 'date') {
+      return (new Date(valA) - new Date(valB)) * modifier;
+    }
+
+    if (typeof valA === 'number' && typeof valB === 'number') {
+      return (valA - valB) * modifier;
+    }
+
+    return valA.toString().localeCompare(valB.toString(), 'id-ID') * modifier;
   });
+
 
   return result;
 });
